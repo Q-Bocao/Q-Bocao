@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🧁Q’Bocao</title>
   <meta name="description" content="Postres Q’Bocao: menú dinámico desde Google Sheets, carrito con WhatsApp y envío por zona." />
+  <link rel="icon" type="image/webp" href="img/logo-qbocao-128.webp" />
   <style>
     :root{
       --bg:#fffaf3; --bg-2:#fff2e1; --card:#ffffff; --ink:#171717;
@@ -36,17 +37,20 @@
     }
     .wrap{max-width:1100px; margin:auto; padding:18px}
     .brand{display:flex; align-items:center; gap:12px}
-    .logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
+
+    /* Logo como imagen (sin animaciones) */
+    .logo{
+      width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
       background:
         radial-gradient(120px 80px at 30% 20%, var(--accent-2), transparent),
         radial-gradient(120px 80px at 70% 80%, var(--accent), transparent);
-      box-shadow:0 6px 30px rgba(255,159,191,.35); position:relative;}
+      box-shadow:0 6px 30px rgba(255,159,191,.35); position:relative;
+      overflow:hidden;
+    }
+    .logo img{width:100%; height:100%; object-fit:contain; display:block}
+
     .logo-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:40px; }
     .tagline{ font-size:10px; line-height:1; color:var(--muted); white-space:nowrap; letter-spacing:.2px; user-select:none; }
-    .logo-emoji{ display:grid; place-items:center; font-size:20px; transform-origin:50% 55%; animation: logo-spin 9s linear infinite; will-change: transform; }
-    .logo:hover .logo-emoji{ animation-play-state: paused; }
-    @media (prefers-reduced-motion: reduce){ .logo-emoji{ animation:none; } }
-    @keyframes logo-spin { to{ transform: rotate(360deg); } }
     h1{font-size:clamp(20px,3vw,28px); margin:0}
 
     .toolbar{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; margin-top:14px}
@@ -120,7 +124,11 @@
     <div class="wrap">
       <div class="brand">
         <div class="logo-wrap">
-          <div class="logo"><span class="logo-emoji" aria-hidden>🍰</span></div>
+          <div class="logo">
+            <img src="img/logo-qbocao-128.webp" alt="Q’Bocao" width="40" height="40"
+                 onerror="this.onerror=null; this.src='img/logo-qbocao-128.webp'">
+            </img>
+          </div>
           <span class="tagline">Hecho para tentarte</span>
         </div>
         <h1>Q’Bocao</h1>
@@ -159,7 +167,7 @@
     <div class="wrap"><span class="brand">JUCA®</span></div>
   </footer>
 
-  <!-- Modal Checkout (mismo que ya tenías) -->
+  <!-- Modal Checkout (sin cambios de lógica) -->
   <div class="modal" id="checkoutModal" aria-hidden="true" role="dialog" aria-labelledby="chkTitle" aria-modal="true">
     <div class="overlay" id="overlay"></div>
     <div class="dialog">
@@ -248,14 +256,12 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-  // SW (opcional, si ya lo tenés, se mantiene)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(()=>{});
     });
   }
 
-  // === CONFIG ===
   const CONFIG = {
     STORE_LAT: -34.6335848,
     STORE_LNG: -58.5979308,
@@ -265,18 +271,15 @@
     PAY: { alias:'roscamacaro.mp', cbu:'0000003100057371117495' }
   };
 
-  // 📄 CSV publicado (tu link “Publicar en la Web”)
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvR8lUTM1DhnVqywz_nmFJ50Qd8FqBCgOqc2sBml5ZHt3h7LYDaC8CArYqldfYcDQp2K_kMJWqIbL4/pub?gid=2121361297&single=true&output=csv";
 
   const state = { cart:new Map(), zone:'retira', zoneMode:'auto', productos:[] };
 
-  // Elements
   const $grid=document.getElementById('grid'), $waBtn=document.getElementById('waBtn'), $clearBtn=document.getElementById('clearBtn'),
         $cartCount=document.getElementById('cartCount'), $subTotal=document.getElementById('subTotal'), $shipFee=document.getElementById('shipFee'),
         $grandTotal=document.getElementById('grandTotal'), $distanceBadge=document.getElementById('distanceBadge'),
         $zoneBadge=document.getElementById('zoneBadge'), $feeBadge=document.getElementById('feeBadge'), $zoneSelect=document.getElementById('zoneSelect');
 
-  // Modal
   const $modal=document.getElementById('checkoutModal'), $overlay=document.getElementById('overlay'), $closeModal=document.getElementById('closeModal'),
         $cancelModal=document.getElementById('cancelModal'), $confirmCheckout=document.getElementById('confirmCheckout');
   const $nombre=document.getElementById('nombre'), $localidad=document.getElementById('localidad'), $calle=document.getElementById('calle'),
@@ -288,12 +291,10 @@
         $transferRow=document.getElementById('transferRow');
   const $toast=document.getElementById('toast');
 
-  // Inicio
   loadCart(); loadCheckoutDraft(); setupModalPayControls(); updateTotals();
   const cached = loadProductsCache(); if(cached?.length){ state.productos=cached; render(); }
   (async () => { await cargarProductos(); render(); (window.requestIdleCallback||setTimeout)(ensureGeoPermissionThenTry,0); })();
 
-  // Eventos
   $waBtn.addEventListener('click',()=>{ if(!state.cart.size){ alert('Tu carrito está vacío.'); return; } openModal(); });
   $clearBtn.addEventListener('click',()=>{ if(confirm('¿Vaciar el carrito?')){ state.cart.clear(); persistCart(); updateCartCount(); updateTotals(); render(); }});
   $zoneSelect.addEventListener('change',()=>{ const v=$zoneSelect.value;
@@ -313,7 +314,6 @@
     persistCheckoutDraft(d); openWhatsAppWith(d); closeModal();
   });
 
-  // === Carga CSV + cache ===
   async function cargarProductos(){
     try{
       $grid.innerHTML = `<div class="empty">Cargando menú...</div>`;
@@ -321,7 +321,7 @@
       if(!res.ok) throw new Error('CSV status '+res.status);
       const txt = await res.text();
       const filas = parseCSV(txt);
-      const data = filas.slice(1) // desde fila 2
+      const data = filas.slice(1)
         .filter(r => r.join('').trim().length>0)
         .map(filaAProducto);
       state.productos = data;
@@ -335,8 +335,8 @@
     const nombre = (r[0]||'').trim();
     const descripcion = (r[1]||'').trim();
     const precio = parsePrecio(r[2]);
-    const img = (r[3]||'').trim() || 'https://via.placeholder.com/640x440?text=Postre';
-    const disp = (r[4]||'').toString().trim().toLowerCase(); // "si"/"no" — NO = agotado
+    const img = (r[3]||'').trim() || 'img/logo-qbocao-128.webp';   // 👈 fallback al logo local
+    const disp = (r[4]||'').toString().trim().toLowerCase();
     const agotado = (disp==='no' || disp==='0' || disp==='false');
     const id = slugify(nombre);
     return {id,nombre,descripcion,precio,img,agotado};
@@ -345,7 +345,6 @@
   function saveProductsCache(arr){ try{ localStorage.setItem('qbocao_products_v1', JSON.stringify(arr)); }catch(e){} }
   function loadProductsCache(){ try{ const raw=localStorage.getItem('qbocao_products_v1'); return raw?JSON.parse(raw):null; }catch{ return null; } }
 
-  // Render
   function render(){
     const list = state.productos;
     $grid.innerHTML = '';
@@ -362,7 +361,8 @@
       <div class="tilt">
         <a href="${href}" style="display:block; position:relative">
           <picture>
-            <img loading="lazy" decoding="async" alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/640x440?text=Postre'" width="640" height="440"/>
+            <img loading="lazy" decoding="async" alt="${escapeHtml(p.nombre)}" src="${p.img}"
+                 onerror="this.onerror=null; this.src='img/logo-qbocao-128.webp'" width="640" height="440"/>
           </picture>
           ${badge}
         </a>
@@ -389,7 +389,6 @@
   }
   function boostHeroImages(){ const imgs=document.querySelectorAll('#grid img'); imgs.forEach((img,i)=>{ if(i<2) img.setAttribute('fetchpriority','high'); }); }
 
-  // Carrito
   function addToCart(id,delta){ const prod=(state.productos||[]).find(x=>x.id===id); if(!prod||!delta||prod.agotado) return;
     const cur=state.cart.get(id)||{id:prod.id,nombre:prod.nombre,precio:prod.precio,img:prod.img,qty:0};
     cur.qty+=delta; if(cur.qty<=0) state.cart.delete(id); else state.cart.set(id,cur);
@@ -400,7 +399,6 @@
   function persistCart(){ try{ const plain=[...state.cart.values()].map(i=>({id:i.id,nombre:i.nombre,precio:i.precio,img:i.img,qty:i.qty})); localStorage.setItem('qbocao_cart_v1', JSON.stringify(plain)); }catch{} }
   function loadCart(){ try{ const raw=localStorage.getItem('qbocao_cart_v1'); if(!raw) return; const arr=JSON.parse(raw); state.cart=new Map(arr.map(i=>[i.id,i])); updateCartCount(); }catch{} }
 
-  // Utils
   function money(n){ return new Intl.NumberFormat('es-AR',{style:'currency',currency:CONFIG.CURRENCY,maximumFractionDigits:0}).format(n); }
   function calcTotals(){ const subtotal=[...state.cart.values()].reduce((a,i)=>a+i.precio*i.qty,0); const fee=CONFIG.ZONES[state.zone]?.fee||0; return {subtotal,fee,total:subtotal+fee}; }
   function updateTotals(){ const {subtotal,fee,total}=calcTotals(); $subTotal.textContent=money(subtotal); $shipFee.textContent=money(fee); $grandTotal.textContent=money(total); $feeBadge.textContent=`Envío: ${money(fee)}`; $zoneBadge.textContent=state.zoneMode==='auto'?'Zona: Automática':'Zona: Retiro en local'; }
@@ -430,7 +428,6 @@
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
   function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-  // Modal helpers
   function setupModalPayControls(){ const toggle=()=>{ if($payTransfer.checked){ $transferRow.style.display=''; $cashRow.style.display='none'; } else { $transferRow.style.display='none'; $cashRow.style.display=''; } };
     $payEfectivo.addEventListener('change',toggle); $payTransfer.addEventListener('change',toggle); toggle(); }
   function openModal(){ $modal.classList.add('open'); $modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; $nombre.focus({preventScroll:true}); }
@@ -452,10 +449,8 @@
   function loadCheckoutDraft(){ try{ const raw=localStorage.getItem('qbocao_checkout_v1'); if(!raw) return; const d=JSON.parse(raw);
     $nombre.value=d.nombre||''; $localidad.value=d.localidad||''; $calle.value=d.calle||''; $altura.value=d.altura||''; $cp.value=d.cp||'';
     if(d.tipo==='Departamento'){ document.getElementById('tipoDepto').checked=true; toggleDepto(true); $piso.value=d.piso||''; $depto.value=d.depto||''; }
-    $indicaciones.value=d.indicaciones||''; $horario.value=d.horario||'';
-  }catch{} }
+    $indicaciones.value=d.indicaciones||''; $horario.value=d.horario||''; }catch{} }
 
-  // WhatsApp
   function openWhatsAppWith(d){
     const items=[...state.cart.values()].map(i=>`• ${i.nombre} x${i.qty} — ${money(i.precio*i.qty)}`).join('\n');
     const {subtotal,fee,total}=calcTotals(); const zoneName=state.zoneMode==='auto'?'Automática':'Retiro en local';
@@ -466,7 +461,6 @@
     window.open(`https://wa.me/${CONFIG.PHONE}?text=${encodeURIComponent(msg)}`,'_blank');
   }
 
-  // Tilt
   function enableTilt(tilt){
     let onMove;
     tilt.addEventListener('mouseenter',()=>{ tilt._hovering=true; const r=()=>tilt.getBoundingClientRect();
@@ -477,7 +471,6 @@
   }
   let toastTimer; function showToast(text){ $toast.textContent=text||'Listo'; $toast.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ $toast.style.display='none'; },1600); }
 
-  // CSV parser simple (soporta comillas y comillas escapadas)
   function parseCSV(text){
     const rows=[]; let cur='', row=[], q=false;
     for(let i=0;i<text.length;i++){
