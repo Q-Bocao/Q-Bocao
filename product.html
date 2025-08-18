@@ -25,7 +25,7 @@
     .qty{ font-weight:700; min-width:28px; text-align:center }
     .badge{border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:var(--card)}
     .soldout{ display:inline-block; margin-left:8px }
-    @media (max-width: 920px){ .grid{ grid-template-columns:1fr; } }
+    @media (max-width:920px){ .grid{ grid-template-columns:1fr } }
   </style>
 </head>
 <body>
@@ -38,66 +38,61 @@
   <main class="wrap" id="app"></main>
 
   <script>
-  // SW
+  // Registrar SW por si entran directo
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(()=>{});
     });
   }
 
-  // CSV publicado (mismo link)
-  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvR8lUTM1DhnVqywz_nmFJ50Qd8FqBCgOqc2sBml5ZHt3h7LYDaC8CArYqldfYcDQp2K_kMJWqIbL4/pub?gid=2121361297&single=true&output=csv";
-  const fmt = new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
-  const pid = new URLSearchParams(location.search).get('id');
+  // === CSV publicado ===
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/17dQjdLP4yYtfKcYBxisnxTCOliTfqWGAn_EJ_LP9qK4/export?format=csv&gid=2121361297";
 
-  if(!pid){
-    document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>';
-  }else{
-    load();
+  const fmt = new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
+  const qs = new URLSearchParams(location.search);
+  const pid = qs.get('id');
+
+  if(!pid){ document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>'; }
+  else{ load(); }
+
+  // CSV utils
+  function parseCSV(text){
+    const rows=[], row=[]; let i=0, f="", q=false;
+    while(i<text.length){
+      const c=text[i++];
+      if(c === '"'){ if(q && text[i] === '"'){ f+='"'; i++; } else q=!q; }
+      else if(c === ',' && !q){ row.push(f); f=""; }
+      else if((c === '\n' || c === '\r') && !q){
+        if(f.length || row.length){ row.push(f); rows.push(row.slice()); }
+        f=""; row.length=0; if(c === '\r' && text[i] === '\n') i++;
+      } else { f+=c; }
+    }
+    if(f.length || row.length){ row.push(f); rows.push(row); }
+    return rows;
+  }
+  function filaAProducto(c){
+    const nombre=(c[0]||"").trim();
+    const descripcion=(c[1]||"").trim();
+    const precio=Number((c[2]||"").toString().replace(/[^\d]/g,""))||0;
+    const img=(c[3]||"").trim()||"https://via.placeholder.com/800x550?text=Postre";
+    const disponible=(c[4]||"").toString().trim().toLowerCase();
+    const agotado=(disponible==='no');
+    const id=slugify(nombre)||("prod-"+Math.random().toString(36).slice(2,8));
+    return {id,nombre,descripcion,precio,img,agotado};
   }
 
   async function load(){
     try{
-      const res = await fetch(CSV_URL, { cache: 'no-store' });
-      const text = await res.text();
-      const rows = parseCSV(text);
-      const dataRows = rows.slice(1);
-      const productos = dataRows
-        .filter(r=>r && r.length>=3 && (r[0]||'').trim())
-        .map(([nombre, descripcion, precio, imagen, disponible])=>{
-          const id = slugify(nombre||'') || ('prod-'+Math.random().toString(36).slice(2,8));
-          const img = (imagen||'').trim() || 'https://via.placeholder.com/800x550?text=Postre';
-          const disp = String(disponible||'SI').trim().toLowerCase();
-          const agotado = (disp === 'no' || disp === '0' || disp === 'false');
-          const pnum = Number(String(precio||'0').replace(/[^\d]/g,'')) || 0;
-          return { id, nombre:(nombre||'').trim(), descripcion:(descripcion||'').trim(), precio:pnum, img, agotado };
-        });
+      const res = await fetch(`${CSV_URL}?t=${Date.now()}`);
+      if(!res.ok) throw new Error('CSV no disponible');
+      const txt = await res.text();
+      const productos = parseCSV(txt).slice(1)
+        .filter(r => (r.join("").trim().length>0))
+        .map(filaAProducto);
       const p = productos.find(x=>x.id===pid);
       if(!p){ document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>'; return; }
       render(p);
-    }catch(e){
-      document.getElementById('app').innerHTML = '<p>Error cargando el producto.</p>';
-    }
-  }
-
-  function parseCSV(text){
-    const rows=[]; let row=[], cur='', inQ=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i], nx=text[i+1];
-      if(inQ){
-        if(ch==='"' && nx === '"'){ cur+='"'; i++; }
-        else if(ch==='"'){ inQ=false; }
-        else { cur+=ch; }
-      }else{
-        if(ch==='\"'){ inQ=true; }
-        else if(ch===','){ row.push(cur); cur=''; }
-        else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
-        else if(ch==='\r'){ /* ignore */ }
-        else { cur+=ch; }
-      }
-    }
-    if(cur.length || row.length){ row.push(cur); rows.push(row); }
-    return rows;
+    }catch{ document.getElementById('app').innerHTML = '<p>Error cargando el producto.</p>'; }
   }
 
   function render(p){
@@ -105,14 +100,11 @@
     const badge = p.agotado ? `<span class="badge soldout">Agotado</span>` : '';
     document.getElementById('app').innerHTML = `
       <div class="grid">
-        <div class="card">
-          <picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture>
-        </div>
+        <div class="card"><picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture></div>
         <div>
           <h1>${escapeHtml(p.nombre)} ${badge}</h1>
           <div class="price">${fmt.format(p.precio)}</div>
           <p style="margin-top:10px">${escapeHtml(p.descripcion||'')}</p>
-
           <div class="actions">
             <button class="btn" onclick="history.back()">Volver</button>
             <button class="btn add" ${p.agotado?'disabled':''} id="addBtn">Agregar</button>
@@ -120,8 +112,7 @@
             <button class="btn" id="rmBtn">Quitar</button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
     const $qty = document.getElementById('qty');
     const updateQty=()=>{ const it=getCart().get(p.id); $qty.textContent = it? it.qty : 0; };
     document.getElementById('addBtn')?.addEventListener('click', ()=>{ addToCart(p, +1); updateQty(); });
@@ -129,23 +120,12 @@
     updateQty();
   }
 
-  // Carrito (compartido)
-  function getCart(){
-    try{ const raw=localStorage.getItem('qbocao_cart_v1'); if(!raw) return new Map(); const arr=JSON.parse(raw); return new Map(arr.map(i=>[i.id,i])); }catch(e){ return new Map(); }
-  }
-  function setCart(map){
-    try{ const plain=[...map.values()].map(i=>({id:i.id,nombre:i.nombre,precio:i.precio,img:i.img,qty:i.qty})); localStorage.setItem('qbocao_cart_v1', JSON.stringify(plain)); }catch(e){}
-  }
-  function addToCart(prod, delta){
-    if(!delta || prod.agotado) return;
-    const cart=getCart();
-    const cur=cart.get(prod.id)||{id:prod.id,nombre:prod.nombre,precio:prod.precio,img:prod.img,qty:0};
-    cur.qty += delta;
-    if(cur.qty<=0) cart.delete(prod.id); else cart.set(prod.id, cur);
-    setCart(cart);
-  }
+  // Carrito compartido
+  function getCart(){ try{ const raw=localStorage.getItem('qbocao_cart_v1'); if(!raw) return new Map(); const arr=JSON.parse(raw); return new Map(arr.map(i=>[i.id,i])); }catch{ return new Map(); } }
+  function setCart(map){ try{ const plain=[...map.values()].map(i=>({id:i.id,nombre:i.nombre,precio:i.precio,img:i.img,qty:i.qty})); localStorage.setItem('qbocao_cart_v1', JSON.stringify(plain)); }catch{} }
+  function addToCart(prod, delta){ if(!delta) return; const cart=getCart(); const cur=cart.get(prod.id)||{id:prod.id,nombre:prod.nombre,precio:prod.precio,img:prod.img,qty:0}; cur.qty+=delta; if(cur.qty<=0) cart.delete(prod.id); else cart.set(prod.id,cur); setCart(cart); }
 
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39'}[m])); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
   function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
   </script>
 </body>
