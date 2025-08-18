@@ -1,6 +1,6 @@
-// sw.js — Q'Bocao turbo cache
-const STATIC = 'qbocao-static-v1';
-const API    = 'qbocao-api-v1';
+// sw.js — Q'Bocao turbo cache (CSV + imágenes)
+const STATIC = 'qbocao-static-v2';
+const DATA   = 'qbocao-data-v2';   // CSV / datos
 const IMGS   = 'qbocao-img-v1';
 
 // Ajustá si cambia tu ruta (en GitHub Pages suele ser /<repo>/)
@@ -22,7 +22,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const names = await caches.keys();
     await Promise.all(
-      names.filter(n => ![STATIC, API, IMGS].includes(n)).map(n => caches.delete(n))
+      names.filter(n => ![STATIC, DATA, IMGS].includes(n)).map(n => caches.delete(n))
     );
     await self.clients.claim();
   })());
@@ -31,13 +31,17 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // 1) API de Apps Script: stale-while-revalidate
-  const isAPI = url.hostname === 'script.google.com' && url.pathname.includes('/macros/');
-  if (isAPI) {
+  // 1) CSV de Google Sheets (publicado): stale-while-revalidate
+  const isCSV =
+    url.hostname === 'docs.google.com' &&
+    url.pathname.includes('/spreadsheets/') &&
+    (url.search.includes('output=csv') || url.search.includes('format=csv') || url.search.includes('tqx=out:csv'));
+
+  if (isCSV) {
     e.respondWith((async () => {
-      const cache = await caches.open(API);
+      const cache = await caches.open(DATA);
       const cached = await cache.match(e.request);
-      const fetchAndUpdate = fetch(e.request).then(async (res) => {
+      const fetchAndUpdate = fetch(e.request, { cache: 'no-store' }).then(async (res) => {
         try { await cache.put(e.request, res.clone()); } catch {}
         return res;
       }).catch(() => cached);
@@ -63,7 +67,7 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 3) Navegación: Network-First con fallback
+  // 3) Navegación: Network-First con fallback a index
   if (e.request.mode === 'navigate') {
     e.respondWith((async () => {
       try {
