@@ -25,83 +25,68 @@
     .qty{ font-weight:700; min-width:28px; text-align:center }
     .badge{border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:var(--card)}
     .soldout{ display:inline-block; margin-left:8px }
-    @media (max-width:920px){ .grid{ grid-template-columns:1fr } }
+    @media (max-width: 920px){ .grid{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <header>
-    <div class="wrap">
-      <a class="back" href="index.html">← Volver al menú</a>
-    </div>
+    <div class="wrap"><a class="back" href="index.html">← Volver al menú</a></div>
   </header>
 
   <main class="wrap" id="app"></main>
 
   <script>
-  // Registrar SW por si entran directo
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(()=>{});
-    });
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
   }
 
-  // === CSV publicado ===
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvR8lUTM1DhnVqywz_nmFJ50Qd8FqBCgOqc2sBml5ZHt3h7LYDaC8CArYqldfYcDQp2K_kMJWqIbL4/pub?gid=2121361297&single=true&output=csv";
-
-
   const fmt = new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
-  const qs = new URLSearchParams(location.search);
-  const pid = qs.get('id');
+  const pid = new URLSearchParams(location.search).get('id');
 
   if(!pid){ document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>'; }
-  else{ load(); }
-
-  // CSV utils
-  function parseCSV(text){
-    const rows=[], row=[]; let i=0, f="", q=false;
-    while(i<text.length){
-      const c=text[i++];
-      if(c === '"'){ if(q && text[i] === '"'){ f+='"'; i++; } else q=!q; }
-      else if(c === ',' && !q){ row.push(f); f=""; }
-      else if((c === '\n' || c === '\r') && !q){
-        if(f.length || row.length){ row.push(f); rows.push(row.slice()); }
-        f=""; row.length=0; if(c === '\r' && text[i] === '\n') i++;
-      } else { f+=c; }
-    }
-    if(f.length || row.length){ row.push(f); rows.push(row); }
-    return rows;
-  }
-  function filaAProducto(c){
-    const nombre=(c[0]||"").trim();
-    const descripcion=(c[1]||"").trim();
-    const precio=Number((c[2]||"").toString().replace(/[^\d]/g,""))||0;
-    const img=(c[3]||"").trim()||"https://via.placeholder.com/800x550?text=Postre";
-    const disponible=(c[4]||"").toString().trim().toLowerCase();
-    const agotado=(disponible==='no');
-    const id=slugify(nombre)||("prod-"+Math.random().toString(36).slice(2,8));
-    return {id,nombre,descripcion,precio,img,agotado};
-  }
+  else { load(); }
 
   async function load(){
     try{
-      const res = await fetch(`${CSV_URL}?t=${Date.now()}`);
-      if(!res.ok) throw new Error('CSV no disponible');
+      const res = await fetch(`${CSV_URL}&t=${Date.now()}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('CSV status '+res.status);
       const txt = await res.text();
       const productos = parseCSV(txt).slice(1)
-        .filter(r => (r.join("").trim().length>0))
+        .filter(r => r.join('').trim().length>0)
         .map(filaAProducto);
-      const p = productos.find(x=>x.id===pid);
+
+      // Buscar por id exacto o por slug(nombre) (extra robusto)
+      const p = productos.find(x => x.id === pid || slugify(x.nombre) === pid);
+
       if(!p){ document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>'; return; }
       render(p);
-    }catch{ document.getElementById('app').innerHTML = '<p>Error cargando el producto.</p>'; }
+    }catch(e){
+      console.error('Error CSV detalle:', e);
+      document.getElementById('app').innerHTML = '<p>Error cargando el producto.</p>';
+    }
   }
+
+  function filaAProducto(r){
+    const nombre=(r[0]||'').trim();
+    const descripcion=(r[1]||'').trim();
+    const precio=parsePrecio(r[2]);
+    const img=(r[3]||'').trim() || 'https://via.placeholder.com/800x550?text=Postre';
+    const disp=(r[4]||'').toString().trim().toLowerCase(); // NO = agotado
+    const agotado=(disp==='no'||disp==='0'||disp==='false');
+    const id=slugify(nombre);
+    return {id,nombre,descripcion,precio,img,agotado};
+  }
+  function parsePrecio(v){ const s=String(v??'').replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.'); const n=parseFloat(s); return isNaN(n)?0:Math.round(n); }
 
   function render(p){
     document.title = `${p.nombre} | Q’Bocao`;
     const badge = p.agotado ? `<span class="badge soldout">Agotado</span>` : '';
     document.getElementById('app').innerHTML = `
       <div class="grid">
-        <div class="card"><picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture></div>
+        <div class="card">
+          <picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture>
+        </div>
         <div>
           <h1>${escapeHtml(p.nombre)} ${badge}</h1>
           <div class="price">${fmt.format(p.precio)}</div>
@@ -113,11 +98,12 @@
             <button class="btn" id="rmBtn">Quitar</button>
           </div>
         </div>
-      </div>`;
-    const $qty = document.getElementById('qty');
+      </div>
+    `;
+    const $qty=document.getElementById('qty');
     const updateQty=()=>{ const it=getCart().get(p.id); $qty.textContent = it? it.qty : 0; };
-    document.getElementById('addBtn')?.addEventListener('click', ()=>{ addToCart(p, +1); updateQty(); });
-    document.getElementById('rmBtn').addEventListener('click', ()=>{ addToCart(p, -1); updateQty(); });
+    document.getElementById('addBtn')?.addEventListener('click', ()=>{ addToCart(p,+1); updateQty(); });
+    document.getElementById('rmBtn').addEventListener('click', ()=>{ addToCart(p,-1); updateQty(); });
     updateQty();
   }
 
@@ -128,6 +114,19 @@
 
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
   function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+  function parseCSV(text){
+    const rows=[]; let cur='', row=[], q=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(c==='"'){ if(q && text[i+1]==='"'){ cur+='"'; i++; } else q=!q; }
+      else if(c===',' && !q){ row.push(cur); cur=''; }
+      else if((c==='\n'||c==='\r') && !q){ if(cur||row.length){ row.push(cur); rows.push(row); row=[]; cur=''; } if(c==='\r'&&text[i+1]==='\n') i++; }
+      else cur+=c;
+    }
+    if(cur||row.length){ row.push(cur); rows.push(row); }
+    return rows;
+  }
   </script>
 </body>
 </html>
