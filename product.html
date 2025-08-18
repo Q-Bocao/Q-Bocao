@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Detalle | Q’Bocao</title>
+  <style>
+    :root{ --bg:#fffaf3; --card:#ffffff; --ink:#171717; --muted:#6b7280; --accent-2:#ff9fbf; --border:rgba(255,159,191,.35); }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+    .wrap{max-width:960px; margin:auto; padding:18px}
+    a{color:inherit}
+    header{ position:sticky; top:0; z-index:10; background:rgba(255,255,255,.8); backdrop-filter:blur(6px); border-bottom:1px solid var(--border); }
+    .back{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); padding:8px 12px; border-radius:10px; background:var(--card); text-decoration:none }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:16px }
+    .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden }
+    .card picture{ display:block; aspect-ratio:16/11; background:#fafafa }
+    .card img{ width:100%; height:100%; object-fit:cover; display:block }
+    h1{ margin:8px 0 6px; font-size:clamp(20px,4vw,28px) }
+    .price{ color:var(--accent-2); font-weight:700; font-size:clamp(18px,3.2vw,22px) }
+    .muted{ color:var(--muted) }
+    .actions{ display:flex; gap:10px; margin-top:14px }
+    .btn{ border:1px solid var(--border); background:var(--card); color:var(--ink); padding:10px 12px; border-radius:12px; cursor:pointer }
+    .btn.add{ background:linear-gradient(135deg, rgba(255,149,182,.28), rgba(255,193,211,.12)); border-color:var(--accent-2) }
+    .qty{ font-weight:700; min-width:28px; text-align:center }
+    .badge{border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:var(--card)}
+    .soldout{ display:inline-block; margin-left:8px }
+    @media (max-width: 920px){ .grid{ grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="back" href="index.html">← Volver al menú</a>
+    </div>
+  </header>
+
+  <main class="wrap" id="app">
+    <!-- Contenido dinámico -->
+  </main>
+
+  <script>
+  // Registrar SW por si entran directo a esta página
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    });
+  }
+
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzEjws1lJHgMw_eBwV8yQKqyHSutaSe8KyJKGd832j-hGeO14Blf_y_VbjndyVx_Dle/exec';
+  const fmt = new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0});
+  const qs = new URLSearchParams(location.search);
+  const pid = qs.get('id');
+
+  if(!pid){
+    document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>';
+  }else{
+    load();
+  }
+
+  async function load(){
+    try{
+      const res = await fetch(`${API_URL}?t=${Date.now()}`);
+      const data = await res.json();
+      const productos = (data.productos||[]).map(normalizar);
+      const p = productos.find(x=>x.id===pid);
+      if(!p){
+        document.getElementById('app').innerHTML = '<p>No se encontró el producto.</p>';
+        return;
+      }
+      render(p);
+    }catch(e){
+      document.getElementById('app').innerHTML = '<p>Error cargando el producto.</p>';
+    }
+  }
+
+  function normalizar(p){
+    const id = slugify(p.nombre || '') || ('prod-' + Math.random().toString(36).slice(2,8));
+    return {
+      id,
+      nombre:(p.nombre||'').trim(),
+      descripcion:(p.descripcion||'').trim(),
+      precio:Number(p.precio)||0,
+      img:(p.imagen||'').trim() || 'https://via.placeholder.com/800x550?text=Postre',
+      agotado: !!p.agotado,
+      tamano:(p.tamano||'').trim().toLowerCase()
+    };
+  }
+
+  function render(p){
+    document.title = `${p.nombre} | Q’Bocao`;
+    const badge = p.agotado ? `<span class="badge soldout">Agotado</span>` : '';
+    document.getElementById('app').innerHTML = `
+      <div class="grid">
+        <div class="card">
+          <picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture>
+        </div>
+        <div>
+          <h1>${escapeHtml(p.nombre)} ${badge}</h1>
+          <div class="price">${fmt.format(p.precio)}</div>
+          ${p.tamano ? `<div class="muted">Tamaño: ${cap(p.tamano)}</div>` : ''}
+          <p style="margin-top:10px">${escapeHtml(p.descripcion||'')}</p>
+
+          <div class="actions">
+            <button class="btn" onclick="history.back()">Volver</button>
+            <button class="btn add" ${p.agotado?'disabled':''} id="addBtn">Agregar</button>
+            <span class="qty" id="qty">0</span>
+            <button class="btn" id="rmBtn">Quitar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    const $qty = document.getElementById('qty');
+    const updateQty=()=>{ const it=getCart().get(p.id); $qty.textContent = it? it.qty : 0; };
+    document.getElementById('addBtn')?.addEventListener('click', ()=>{ addToCart(p, +1); updateQty(); });
+    document.getElementById('rmBtn').addEventListener('click', ()=>{ addToCart(p, -1); updateQty(); });
+    updateQty();
+  }
+
+  // Carrito compartido por localStorage
+  function getCart(){
+    try{ const raw=localStorage.getItem('qbocao_cart_v1'); if(!raw) return new Map(); const arr=JSON.parse(raw); return new Map(arr.map(i=>[i.id,i])); }catch(e){ return new Map(); }
+  }
+  function setCart(map){
+    try{ const plain=[...map.values()].map(i=>({id:i.id,nombre:i.nombre,precio:i.precio,img:i.img,qty:i.qty})); localStorage.setItem('qbocao_cart_v1', JSON.stringify(plain)); }catch(e){}
+  }
+  function addToCart(prod, delta){
+    if(!delta) return;
+    const cart=getCart();
+    const cur=cart.get(prod.id)||{id:prod.id,nombre:prod.nombre,precio:prod.precio,img:prod.img,qty:0};
+    cur.qty += delta;
+    if(cur.qty<=0) cart.delete(prod.id); else cart.set(prod.id, cur);
+    setCart(cart);
+  }
+
+  function cap(s){ return s? s.charAt(0).toUpperCase()+s.slice(1) : ''; }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
+  function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+  </script>
+</body>
+</html>
