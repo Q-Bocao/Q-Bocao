@@ -21,45 +21,54 @@
         radial-gradient(600px 420px at 110% -10%, rgba(255,213,226,.18), transparent 60%),
         linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%, #fff 100%);
       min-height:100svh;
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility;
     }
     header{
       position:sticky; top:0; z-index:30;
       backdrop-filter:saturate(1.05) blur(6px);
       background:rgba(255,255,255,.72);
       border-bottom:1px solid var(--border);
-      transform:translateZ(0); backface-visibility:hidden;
+      will-change: backdrop-filter; transform: translateZ(0); backface-visibility: hidden;
     }
-    @media (max-width:560px){ body{background:var(--bg)} header{backdrop-filter:none; background:#ffffffd9} }
+    @media (max-width: 560px){
+      body{ background: var(--bg); }
+      header{ backdrop-filter:none; background:#ffffffd9; }
+    }
     .wrap{max-width:1100px; margin:auto; padding:18px}
     .brand{display:flex; align-items:center; gap:12px}
     .logo{width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
       background:
         radial-gradient(120px 80px at 30% 20%, var(--accent-2), transparent),
         radial-gradient(120px 80px at 70% 80%, var(--accent), transparent);
-      box-shadow:0 6px 30px rgba(255,159,191,.35);
-    }
-    .logo-emoji{font-size:20px; display:grid; place-items:center; transform-origin:50% 55%; animation:spin 9s linear infinite}
-    .tagline{font-size:10px; color:var(--muted); user-select:none}
-    @keyframes spin{to{transform:rotate(360deg)}}
+      box-shadow:0 6px 30px rgba(255,159,191,.35); position:relative;}
+    .logo-wrap{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:40px; }
+    .tagline{ font-size:10px; line-height:1; color:var(--muted); white-space:nowrap; letter-spacing:.2px; user-select:none; }
+    .logo-emoji{ display:grid; place-items:center; font-size:20px; transform-origin:50% 55%; animation: logo-spin 9s linear infinite; will-change: transform; }
+    .logo:hover .logo-emoji{ animation-play-state: paused; }
+    @media (prefers-reduced-motion: reduce){ .logo-emoji{ animation:none; } }
+    @keyframes logo-spin { to{ transform: rotate(360deg); } }
     h1{font-size:clamp(20px,3vw,28px); margin:0}
+
     .toolbar{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; margin-top:14px}
-    .btn,.input,select,textarea{border:1px solid var(--chip-bd); background:var(--card); color:var(--ink); padding:10px 12px; border-radius:12px; cursor:pointer; font:inherit}
+    .btn,.input,select,textarea{ border:1px solid var(--chip-bd); background:var(--card); color:var(--ink);
+      padding:10px 12px; border-radius:12px; cursor:pointer; font:inherit }
     .input,textarea,select{cursor:text}
     .btn:hover,select:hover{border-color:var(--accent-3)}
     .distance{color:var(--muted); font-size:14px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .badge{border:1px solid var(--border); border-radius:999px; padding:6px 10px; background:var(--card)}
+
     main{padding:18px}
     .grid{--min:240px; display:grid; grid-template-columns:repeat(auto-fill,minmax(var(--min),1fr)); gap:16px; max-width:1100px; margin:18px auto}
     .card{
       background:var(--card); border:1px solid rgba(255,159,191,.28); border-radius:16px; overflow:hidden;
-      display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,.08);
-      content-visibility:auto; contain-intrinsic-size:300px 220px;
+      display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,.08); perspective:900px;
+      content-visibility: auto; contain-intrinsic-size: 300px 220px;
     }
-    .card picture{display:block; aspect-ratio:16/11; background:#fafafa; border-bottom:1px solid rgba(255,159,191,.28)}
-    .card img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; transform:translateZ(0)}
+    .card .tilt{transform-style:preserve-3d; transition: transform .25s ease; will-change: transform; }
+    .card picture{display:block; aspect-ratio:16/11; background:#fafafa; overflow:hidden; border-bottom:1px solid rgba(255,159,191,.28); backface-visibility:hidden}
+    .card img{width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; transform: translateZ(0)}
     .card:hover img{transform:scale(1.04)}
-    .card .body{padding:14px}
+    .card .body{padding:14px; backface-visibility:hidden}
     .title{font-size:18px; margin:0 0 6px; display:flex; justify-content:space-between; align-items:center}
     .qty-badge{font-size:12px; color:var(--muted); border:1px solid var(--border); padding:2px 8px; border-radius:999px}
     .meta{display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:14px}
@@ -86,7 +95,7 @@
     .dialog h3{margin:0 0 8px}
     .dialog .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
     .dialog .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
-    @media (max-width:560px){ .dialog .grid2, .dialog .grid3{grid-template-columns:1fr} }
+    @media (max-width: 560px){ .dialog .grid2, .dialog .grid3{grid-template-columns:1fr;} }
     .row{display:grid; gap:6px}
     label{font-size:12px; color:var(--muted)}
     .err{color:#ff6b6b; font-size:12px}
@@ -94,26 +103,32 @@
     .x{position:absolute; top:8px; right:8px; border:1px solid var(--chip-bd); background:transparent; color:var(--ink); border-radius:10px; padding:6px 10px; cursor:pointer}
     .paybox{border:1px dashed var(--chip-bd); border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .copy{border:1px solid var(--chip-bd); border-radius:10px; padding:6px 10px; background:transparent; color:var(--ink); cursor:pointer}
-    .card.agotado{opacity:.65; filter:grayscale(.15)}
-    .soldout{position:absolute; top:8px; left:8px}
-    .card.agotado .actions .add{opacity:.5; pointer-events:none}
-    @media (max-width:960px){ .toolbar{grid-template-columns:1fr} .grid{--min:170px} .cart{left:12px; right:12px} }
+    .toast{ position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 20px);
+      transform:translateX(-50%); background:rgba(0,0,0,.8); color:#fff; padding:10px 14px; border-radius:10px; display:none; z-index:9999; pointer-events:none;}
+    @media (max-width: 960px){
+      .toolbar{grid-template-columns:1fr}
+      .grid{--min:170px}
+      .cart{left:12px; right:12px}
+    }
+    .card.agotado { opacity:.65; filter:grayscale(.15); }
+    .soldout { position:absolute; top:8px; left:8px; }
+    .card.agotado .actions .add { opacity:.5; pointer-events:none; }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
       <div class="brand">
-        <div class="logo"><span class="logo-emoji" aria-hidden>🍰</span></div>
-        <div>
-          <h1>Q’Bocao</h1>
-          <div class="tagline">Hecho para tentarte</div>
+        <div class="logo-wrap">
+          <div class="logo"><span class="logo-emoji" aria-hidden>🍰</span></div>
+          <span class="tagline">Hecho para tentarte</span>
         </div>
+        <h1>Q’Bocao</h1>
       </div>
 
       <div class="toolbar">
         <div></div>
-        <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end">
+        <div class="actions-right" style="display:flex; gap:10px; align-items:center; justify-content:flex-end">
           <select id="zoneSelect" title="Cambiar zona">
             <option value="auto">Zona automática</option>
             <option value="retira">Retiro en local</option>
@@ -144,13 +159,12 @@
     <div class="wrap"><span class="brand">JUCA®</span></div>
   </footer>
 
-  <!-- Modal -->
+  <!-- Modal Checkout (mismo que ya tenías) -->
   <div class="modal" id="checkoutModal" aria-hidden="true" role="dialog" aria-labelledby="chkTitle" aria-modal="true">
     <div class="overlay" id="overlay"></div>
     <div class="dialog">
       <button class="x" id="closeModal" aria-label="Cerrar">✕</button>
       <h3 id="chkTitle">Datos para la entrega</h3>
-
       <div class="grid2">
         <div class="row">
           <label for="nombre">Nombre y apellido *</label>
@@ -163,7 +177,6 @@
           <span class="err" id="e-localidad"></span>
         </div>
       </div>
-
       <div class="grid3">
         <div class="row">
           <label for="calle">Calle *</label>
@@ -181,7 +194,6 @@
           <span class="err" id="e-cp"></span>
         </div>
       </div>
-
       <div class="grid2">
         <div class="row">
           <label>Tipo de domicilio *</label>
@@ -204,7 +216,6 @@
           </div>
         </div>
       </div>
-
       <div class="row">
         <label>Método de pago *</label>
         <div style="display:flex; gap:12px; flex-wrap:wrap">
@@ -212,12 +223,10 @@
           <label><input type="radio" name="pago" id="payTransfer" value="transferencia"> Transferencia</label>
         </div>
       </div>
-
       <div class="row" id="cashRow">
         <label for="cashChange">¿Llevamos cambio? (opcional)</label>
         <input class="input" id="cashChange" type="number" min="0" inputmode="numeric" placeholder="Ej.: 10000" />
       </div>
-
       <div class="row" id="transferRow" style="display:none">
         <label>Datos para transferir</label>
         <div class="paybox">
@@ -227,17 +236,8 @@
           <button class="copy" data-copy="cbu">Copiar CBU</button>
         </div>
       </div>
-
-      <div class="row">
-        <label for="indicaciones">Indicaciones para el repartidor (opcional)</label>
-        <textarea class="input" id="indicaciones" rows="3" placeholder="Ej.: Timbre roto, llamar al llegar."></textarea>
-      </div>
-
-      <div class="row">
-        <label for="horario">Horario preferido (opcional)</label>
-        <input class="input" id="horario" placeholder="Ej.: 18 a 20 hs" />
-      </div>
-
+      <div class="row"><label for="indicaciones">Indicaciones (opcional)</label><textarea class="input" id="indicaciones" rows="3" placeholder="Ej.: Timbre roto, llamar al llegar."></textarea></div>
+      <div class="row"><label for="horario">Horario preferido (opcional)</label><input class="input" id="horario" placeholder="Ej.: 18 a 20 hs" /></div>
       <div class="bar">
         <button class="btn" id="cancelModal">Cancelar</button>
         <button class="wa" id="confirmCheckout">Confirmar y abrir WhatsApp</button>
@@ -248,14 +248,14 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-  // ——— Service Worker ———
+  // SW (opcional, si ya lo tenés, se mantiene)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(()=>{});
     });
   }
 
-  // ——— Configuración ———
+  // === CONFIG ===
   const CONFIG = {
     STORE_LAT: -34.6335848,
     STORE_LNG: -58.5979308,
@@ -265,151 +265,104 @@
     PAY: { alias:'roscamacaro.mp', cbu:'0000003100057371117495' }
   };
 
-  // === CSV publicado (más estable) ===
+  // 📄 CSV publicado (tu link “Publicar en la Web”)
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvR8lUTM1DhnVqywz_nmFJ50Qd8FqBCgOqc2sBml5ZHt3h7LYDaC8CArYqldfYcDQp2K_kMJWqIbL4/pub?gid=2121361297&single=true&output=csv";
 
-  // ——— Estado ———
   const state = { cart:new Map(), zone:'retira', zoneMode:'auto', productos:[] };
 
-  // ——— Elementos ———
-  const $grid = document.getElementById('grid');
-  const $waBtn = document.getElementById('waBtn');
-  const $clearBtn = document.getElementById('clearBtn');
-  const $cartCount = document.getElementById('cartCount');
-  const $subTotal = document.getElementById('subTotal');
-  const $shipFee = document.getElementById('shipFee');
-  const $grandTotal = document.getElementById('grandTotal');
-  const $distanceBadge = document.getElementById('distanceBadge');
-  const $zoneBadge = document.getElementById('zoneBadge');
-  const $feeBadge = document.getElementById('feeBadge');
-  const $zoneSelect = document.getElementById('zoneSelect');
+  // Elements
+  const $grid=document.getElementById('grid'), $waBtn=document.getElementById('waBtn'), $clearBtn=document.getElementById('clearBtn'),
+        $cartCount=document.getElementById('cartCount'), $subTotal=document.getElementById('subTotal'), $shipFee=document.getElementById('shipFee'),
+        $grandTotal=document.getElementById('grandTotal'), $distanceBadge=document.getElementById('distanceBadge'),
+        $zoneBadge=document.getElementById('zoneBadge'), $feeBadge=document.getElementById('feeBadge'), $zoneSelect=document.getElementById('zoneSelect');
 
   // Modal
-  const $modal = document.getElementById('checkoutModal');
-  const $overlay = document.getElementById('overlay');
-  const $closeModal = document.getElementById('closeModal');
-  const $cancelModal = document.getElementById('cancelModal');
-  const $confirmCheckout = document.getElementById('confirmCheckout');
-  const $nombre = document.getElementById('nombre');
-  const $localidad = document.getElementById('localidad');
-  const $calle = document.getElementById('calle');
-  const $altura = document.getElementById('altura');
-  const $cp = document.getElementById('cp');
-  const $tipoCasa = document.getElementById('tipoCasa');
-  const $tipoDepto = document.getElementById('tipoDepto');
-  const $deptoFields = document.getElementById('deptoFields');
-  const $piso = document.getElementById('piso');
-  const $depto = document.getElementById('depto');
-  const $indicaciones = document.getElementById('indicaciones');
-  const $horario = document.getElementById('horario');
-  const $payEfectivo = document.getElementById('payEfectivo');
-  const $payTransfer = document.getElementById('payTransfer');
-  const $cashRow = document.getElementById('cashRow');
-  const $cashChange = document.getElementById('cashChange');
-  const $transferRow = document.getElementById('transferRow');
-  const $toast = document.getElementById('toast');
+  const $modal=document.getElementById('checkoutModal'), $overlay=document.getElementById('overlay'), $closeModal=document.getElementById('closeModal'),
+        $cancelModal=document.getElementById('cancelModal'), $confirmCheckout=document.getElementById('confirmCheckout');
+  const $nombre=document.getElementById('nombre'), $localidad=document.getElementById('localidad'), $calle=document.getElementById('calle'),
+        $altura=document.getElementById('altura'), $cp=document.getElementById('cp'), $tipoCasa=document.getElementById('tipoCasa'),
+        $tipoDepto=document.getElementById('tipoDepto'), $deptoFields=document.getElementById('deptoFields'), $piso=document.getElementById('piso'),
+        $depto=document.getElementById('depto'), $indicaciones=document.getElementById('indicaciones'), $horario=document.getElementById('horario'),
+        $payEfectivo=document.getElementById('payEfectivo'), $payTransfer=document.getElementById('payTransfer'),
+        $cashRow=document.getElementById('cashRow'), $cashChange=document.getElementById('cashChange'),
+        $transferRow=document.getElementById('transferRow');
+  const $toast=document.getElementById('toast');
 
-  // ——— Inicio ———
+  // Inicio
   loadCart(); loadCheckoutDraft(); setupModalPayControls(); updateTotals();
+  const cached = loadProductsCache(); if(cached?.length){ state.productos=cached; render(); }
+  (async () => { await cargarProductos(); render(); (window.requestIdleCallback||setTimeout)(ensureGeoPermissionThenTry,0); })();
 
-  // Pintar rápido desde caché si existe
-  const cached = loadProductsCache();
-  if (cached && cached.length) { state.productos = cached; render(); }
-
-  // Cargar desde CSV y actualizar
-  (async () => {
-    await cargarProductos(); render();
-    (window.requestIdleCallback || setTimeout)(ensureGeoPermissionThenTry, 0);
-  })();
-
-  // ——— Eventos ———
-  $waBtn.addEventListener('click', () => { if(!state.cart.size){ alert('Tu carrito está vacío.'); return;} openModal(); });
-  $clearBtn.addEventListener('click', () => { if(confirm('¿Vaciar el carrito?')){ state.cart.clear(); persistCart(); updateCartCount(); updateTotals(); render(); } });
-  $zoneSelect.addEventListener('change', () => {
-    const v = $zoneSelect.value;
+  // Eventos
+  $waBtn.addEventListener('click',()=>{ if(!state.cart.size){ alert('Tu carrito está vacío.'); return; } openModal(); });
+  $clearBtn.addEventListener('click',()=>{ if(confirm('¿Vaciar el carrito?')){ state.cart.clear(); persistCart(); updateCartCount(); updateTotals(); render(); }});
+  $zoneSelect.addEventListener('change',()=>{ const v=$zoneSelect.value;
     if(v==='auto'){ state.zoneMode='auto'; ensureGeoPermissionThenTry(); $zoneBadge.textContent='Zona: Automática'; }
     else{ state.zoneMode='manual'; state.zone='retira'; updateTotals(); $zoneBadge.textContent='Zona: Retiro en local'; }
   });
-  document.addEventListener('click', async (e)=>{
-    const btn = e.target.closest('.copy'); if(!btn) return;
+  document.addEventListener('click',async (e)=>{ const btn=e.target.closest('.copy'); if(!btn) return;
     const text = btn.dataset.copy==='alias' ? CONFIG.PAY.alias : CONFIG.PAY.cbu;
     try{ await navigator.clipboard.writeText(text); showToast('Copiado ✅'); }catch{ showToast('No se pudo copiar'); }
   });
-  $tipoCasa.addEventListener('change', ()=> toggleDepto(false));
-  $tipoDepto.addEventListener('change', ()=> toggleDepto(true));
-  $overlay.addEventListener('click', closeModal);
-  $closeModal.addEventListener('click', closeModal);
-  $cancelModal.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && $modal.classList.contains('open')) closeModal(); });
-  $confirmCheckout.addEventListener('click', () => {
-    const data = validateCheckout(); if(!data) return;
-    data.pay = $payTransfer.checked ? 'transferencia' : 'efectivo';
-    data.cashChange = Math.max(0, Number($cashChange.value || 0));
-    persistCheckoutDraft(data);
-    openWhatsAppWith(data);
-    closeModal();
+  document.getElementById('tipoCasa').addEventListener('change', ()=> toggleDepto(false));
+  document.getElementById('tipoDepto').addEventListener('change', ()=> toggleDepto(true));
+  $overlay.addEventListener('click', closeModal); $closeModal?.addEventListener('click', closeModal); $cancelModal.addEventListener('click', closeModal);
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape'&&$modal.classList.contains('open')) closeModal(); });
+  $confirmCheckout.addEventListener('click', ()=>{ const d=validateCheckout(); if(!d) return;
+    d.pay=$payTransfer.checked?'transferencia':'efectivo'; d.cashChange=Math.max(0, Number($cashChange.value||0));
+    persistCheckoutDraft(d); openWhatsAppWith(d); closeModal();
   });
 
-  // ——— CSV ———
-  function parseCSV(text){
-    const rows=[], row=[]; let i=0, f="", q=false;
-    while(i<text.length){
-      const c=text[i++];
-      if(c === '"'){ if(q && text[i] === '"'){ f+='"'; i++; } else q=!q; }
-      else if(c === ',' && !q){ row.push(f); f=""; }
-      else if((c === '\n' || c === '\r') && !q){
-        if(f.length || row.length){ row.push(f); rows.push(row.slice()); }
-        f=""; row.length=0; if(c === '\r' && text[i] === '\n') i++;
-      } else { f+=c; }
-    }
-    if(f.length || row.length){ row.push(f); rows.push(row); }
-    return rows;
-  }
-  function filaAProducto(c){
-    const nombre = (c[0]||"").trim();
-    const descripcion = (c[1]||"").trim();
-    const precio = Number((c[2]||"").toString().replace(/[^\d]/g,"")) || 0;
-    const img = (c[3]||"").trim() || "https://via.placeholder.com/640x440?text=Postre";
-    const disponible = (c[4]||"").toString().trim().toLowerCase();
-    const agotado = (disponible==='no');
-    const id = slugify(nombre) || ("prod-"+Math.random().toString(36).slice(2,8));
-    return { id, nombre, descripcion, precio, img, agotado };
-  }
+  // === Carga CSV + cache ===
   async function cargarProductos(){
     try{
       $grid.innerHTML = `<div class="empty">Cargando menú...</div>`;
-      const res = await fetch(`${CSV_URL}?t=${Date.now()}`);
-      if(!res.ok) throw new Error('CSV no disponible');
+      const res = await fetch(`${CSV_URL}&t=${Date.now()}`, { cache:'no-store' });
+      if(!res.ok) throw new Error('CSV status '+res.status);
       const txt = await res.text();
-      const data = parseCSV(txt).slice(1) // salta encabezado
-        .filter(r => (r.join("").trim().length>0))
+      const filas = parseCSV(txt);
+      const data = filas.slice(1) // desde fila 2
+        .filter(r => r.join('').trim().length>0)
         .map(filaAProducto);
-      state.productos = data; saveProductsCache(data);
+      state.productos = data;
+      saveProductsCache(data);
     }catch(e){
-      console.error(e);
+      console.error('Error CSV índice:', e);
       if(!state.productos.length) $grid.innerHTML = `<div class="empty">No pude cargar el menú. Probá recargar.</div>`;
     }
   }
+  function filaAProducto(r){
+    const nombre = (r[0]||'').trim();
+    const descripcion = (r[1]||'').trim();
+    const precio = parsePrecio(r[2]);
+    const img = (r[3]||'').trim() || 'https://via.placeholder.com/640x440?text=Postre';
+    const disp = (r[4]||'').toString().trim().toLowerCase(); // "si"/"no" — NO = agotado
+    const agotado = (disp==='no' || disp==='0' || disp==='false');
+    const id = slugify(nombre);
+    return {id,nombre,descripcion,precio,img,agotado};
+  }
+  function parsePrecio(v){ const s=String(v??'').replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.'); const n=parseFloat(s); return isNaN(n)?0:Math.round(n); }
+  function saveProductsCache(arr){ try{ localStorage.setItem('qbocao_products_v1', JSON.stringify(arr)); }catch(e){} }
+  function loadProductsCache(){ try{ const raw=localStorage.getItem('qbocao_products_v1'); return raw?JSON.parse(raw):null; }catch{ return null; } }
 
-  // ——— Render ———
+  // Render
   function render(){
     const list = state.productos;
     $grid.innerHTML = '';
-    if(!list.length){ $grid.innerHTML = `<div class="empty">No hay productos disponibles 🍮</div>`; return; }
+    if(!list.length){ $grid.innerHTML = `<div class="empty">No hay productos disponibles por ahora 🍮</div>`; return; }
     list.forEach(p => $grid.appendChild(card(p)));
     boostHeroImages();
   }
   function card(p){
-    const el = document.createElement('article');
-    el.className = 'card' + (p.agotado ? ' agotado' : '');
-    const badge = p.agotado ? '<span class="badge soldout">Agotado</span>' : '';
-    const href = `product.html?id=${encodeURIComponent(p.id)}`;
-    el.innerHTML = `
+    const el=document.createElement('article');
+    el.className='card'+(p.agotado?' agotado':'');
+    const badge=p.agotado?'<span class="badge soldout">Agotado</span>':'';
+    const href=`product.html?id=${encodeURIComponent(p.id)}`;
+    el.innerHTML=`
       <div class="tilt">
         <a href="${href}" style="display:block; position:relative">
           <picture>
-            <img loading="lazy" decoding="async" alt="${escapeHtml(p.nombre)}" src="${p.img}"
-                 onerror="this.src='https://via.placeholder.com/640x440?text=Postre'" width="640" height="440"/>
+            <img loading="lazy" decoding="async" alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/640x440?text=Postre'" width="640" height="440"/>
           </picture>
           ${badge}
         </a>
@@ -424,50 +377,40 @@
           <span></span>
         </div>
         <div class="actions">
-          <button class="btn add" data-id="${p.id}" ${p.agotado ? 'disabled' : ''}>Agregar</button>
+          <button class="btn add" data-id="${p.id}" ${p.agotado?'disabled':''}>Agregar</button>
           <button class="btn remove" data-id="${p.id}">Quitar</button>
         </div>
       </div>`;
-    el.querySelector('.add').addEventListener('click', () => {
-      addToCart(p.id, +1); el.querySelector('#qty-'+p.id).textContent = getQty(p.id);
-    });
-    el.querySelector('.remove').addEventListener('click', () => {
-      addToCart(p.id, -1); el.querySelector('#qty-'+p.id).textContent = getQty(p.id) || 0;
-    });
+    const hoverCapable = matchMedia('(hover:hover) and (pointer:fine)').matches;
+    if (hoverCapable) enableTilt(el.querySelector('.tilt'));
+    el.querySelector('.add').addEventListener('click', ()=>{ addToCart(p.id,+1); el.querySelector('#qty-'+p.id).textContent=getQty(p.id); });
+    el.querySelector('.remove').addEventListener('click', ()=>{ addToCart(p.id,-1); el.querySelector('#qty-'+p.id).textContent=getQty(p.id)||0; });
     return el;
   }
-  function boostHeroImages(){ document.querySelectorAll('#grid img').forEach((img,i)=>{ if(i<2) img.setAttribute('fetchpriority','high'); }); }
+  function boostHeroImages(){ const imgs=document.querySelectorAll('#grid img'); imgs.forEach((img,i)=>{ if(i<2) img.setAttribute('fetchpriority','high'); }); }
 
-  // ——— Carrito ———
-  function addToCart(id, delta){
-    const prod = state.productos.find(x=>x.id===id);
-    if(!prod || !delta || prod.agotado) return;
-    const cur = state.cart.get(id) || { id:prod.id, nombre:prod.nombre, precio:prod.precio, img:prod.img, qty:0 };
-    cur.qty += delta;
-    if(cur.qty<=0) state.cart.delete(id); else state.cart.set(id, cur);
+  // Carrito
+  function addToCart(id,delta){ const prod=(state.productos||[]).find(x=>x.id===id); if(!prod||!delta||prod.agotado) return;
+    const cur=state.cart.get(id)||{id:prod.id,nombre:prod.nombre,precio:prod.precio,img:prod.img,qty:0};
+    cur.qty+=delta; if(cur.qty<=0) state.cart.delete(id); else state.cart.set(id,cur);
     persistCart(); updateCartCount(); updateTotals();
   }
-  function getQty(id){ const it=state.cart.get(id); return it? it.qty : 0; }
-  function updateCartCount(){ $cartCount.textContent = [...state.cart.values()].reduce((a,i)=>a+i.qty,0); }
+  function getQty(id){ const it=state.cart.get(id); return it?it.qty:0; }
+  function updateCartCount(){ $cartCount.textContent=[...state.cart.values()].reduce((a,i)=>a+i.qty,0); }
   function persistCart(){ try{ const plain=[...state.cart.values()].map(i=>({id:i.id,nombre:i.nombre,precio:i.precio,img:i.img,qty:i.qty})); localStorage.setItem('qbocao_cart_v1', JSON.stringify(plain)); }catch{} }
   function loadCart(){ try{ const raw=localStorage.getItem('qbocao_cart_v1'); if(!raw) return; const arr=JSON.parse(raw); state.cart=new Map(arr.map(i=>[i.id,i])); updateCartCount(); }catch{} }
 
-  // ——— Utilidades ———
+  // Utils
   function money(n){ return new Intl.NumberFormat('es-AR',{style:'currency',currency:CONFIG.CURRENCY,maximumFractionDigits:0}).format(n); }
-  function calcTotals(){ const subtotal=[...state.cart.values()].reduce((a,i)=>a+i.precio*i.qty,0); const fee=CONFIG.ZONES[state.zone]?.fee||0; return {subtotal, fee, total:subtotal+fee}; }
+  function calcTotals(){ const subtotal=[...state.cart.values()].reduce((a,i)=>a+i.precio*i.qty,0); const fee=CONFIG.ZONES[state.zone]?.fee||0; return {subtotal,fee,total:subtotal+fee}; }
   function updateTotals(){ const {subtotal,fee,total}=calcTotals(); $subTotal.textContent=money(subtotal); $shipFee.textContent=money(fee); $grandTotal.textContent=money(total); $feeBadge.textContent=`Envío: ${money(fee)}`; $zoneBadge.textContent=state.zoneMode==='auto'?'Zona: Automática':'Zona: Retiro en local'; }
-  function saveProductsCache(arr){ try{ localStorage.setItem('qbocao_products_v1', JSON.stringify(arr)); }catch{} }
-  function loadProductsCache(){ try{ const raw=localStorage.getItem('qbocao_products_v1'); return raw? JSON.parse(raw):null; }catch{ return null; } }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
-  function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-  // ——— Zona / geolocalización ———
   async function ensureGeoPermissionThenTry(){
     try{
-      if(navigator.permissions && navigator.permissions.query){
-        const perm = await navigator.permissions.query({name:'geolocation'});
+      if(navigator.permissions?.query){
+        const perm=await navigator.permissions.query({name:'geolocation'});
         if(perm.state==='denied'){ $distanceBadge.textContent='Distancia: permiso denegado'; state.zone='retira'; updateTotals(); return; }
-        perm.onchange = () => { if(perm.state==='granted') tryAutoDistance(); };
+        perm.onchange=()=>{ if(perm.state==='granted') tryAutoDistance(); };
       }
       await tryAutoDistance();
     }catch{ $distanceBadge.textContent='Distancia: —'; }
@@ -475,21 +418,21 @@
   async function tryAutoDistance(){
     if(state.zoneMode!=='auto') return;
     try{
-      const pos = await getCurrentPosition({enableHighAccuracy:true, timeout:8000});
-      const km = haversineKm(CONFIG.STORE_LAT, CONFIG.STORE_LNG, pos.coords.latitude, pos.coords.longitude);
+      const pos=await getCurrentPosition({enableHighAccuracy:true, timeout:8000});
+      const km=haversineKm(CONFIG.STORE_LAT,CONFIG.STORE_LNG,pos.coords.latitude,pos.coords.longitude);
       applyZoneByKm(km); $distanceBadge.textContent=`Distancia: ${km.toFixed(1)} km`; $zoneSelect.value='auto';
     }catch{ $distanceBadge.textContent='Distancia: —'; state.zone='retira'; updateTotals(); }
   }
   function applyZoneByKm(km){ if(km<0.2) state.zone='retira'; else if(km<=3) state.zone='z1'; else if(km<=6) state.zone='z2'; else state.zone='z3'; updateTotals(); }
-  const R=6371, toRad=d=>d*Math.PI/180;
-  function haversineKm(lat1, lon1, lat2, lon2){ const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1); const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
-  function getCurrentPosition(opts={}){ return new Promise((res,rej)=>{ if(!('geolocation' in navigator)) return rej(new Error('no geo')); navigator.geolocation.getCurrentPosition(res,rej,opts); }); }
+  const R=6371; const toRad=d=>d*Math.PI/180;
+  function haversineKm(lat1,lon1,lat2,lon2){ const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1); const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2; return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); }
+  function getCurrentPosition(opts={}){ return new Promise((res,rej)=>{ if(!('geolocation' in navigator)) return rej(new Error('No geo')); navigator.geolocation.getCurrentPosition(res,rej,opts); }); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[m])); }
+  function slugify(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-  // ——— Modal helpers ———
-  function setupModalPayControls(){
-    const toggle=()=>{ if($payTransfer.checked){ $transferRow.style.display=''; $cashRow.style.display='none'; } else { $transferRow.style.display='none'; $cashRow.style.display=''; } };
-    $payEfectivo.addEventListener('change',toggle); $payTransfer.addEventListener('change',toggle); toggle();
-  }
+  // Modal helpers
+  function setupModalPayControls(){ const toggle=()=>{ if($payTransfer.checked){ $transferRow.style.display=''; $cashRow.style.display='none'; } else { $transferRow.style.display='none'; $cashRow.style.display=''; } };
+    $payEfectivo.addEventListener('change',toggle); $payTransfer.addEventListener('change',toggle); toggle(); }
   function openModal(){ $modal.classList.add('open'); $modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; $nombre.focus({preventScroll:true}); }
   function closeModal(){ $modal.classList.remove('open'); $modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
   function toggleDepto(show){ $deptoFields.style.display = show ? '' : 'none'; }
@@ -502,33 +445,53 @@
     if(!/^\d{1,5}$/.test(d.altura)){ ok=false; setErr('altura','Altura inválida.'); }
     if(!/^\d{4}$/.test(d.cp) && !/^[A-Z]\d{4}[A-Z]{3}$/.test(d.cp)){ ok=false; setErr('cp','Código postal inválido.'); }
     if(d.tipo==='Departamento'){ if(!d.piso){ ok=false; setErr('piso','Indicá el piso.'); } if(!d.depto){ ok=false; setErr('depto','Indicá el departamento.'); } }
-    return ok? d : null;
+    return ok?d:null;
   }
-  function setErr(key,msg){ const el=document.getElementById('e-'+key); if(el) el.textContent=msg||''; }
+  function setErr(key,msg){ const el=document.getElementById('e-'+key); if(el) el.textContent = msg||''; }
   function persistCheckoutDraft(d){ try{ localStorage.setItem('qbocao_checkout_v1', JSON.stringify(d)); }catch{} }
   function loadCheckoutDraft(){ try{ const raw=localStorage.getItem('qbocao_checkout_v1'); if(!raw) return; const d=JSON.parse(raw);
     $nombre.value=d.nombre||''; $localidad.value=d.localidad||''; $calle.value=d.calle||''; $altura.value=d.altura||''; $cp.value=d.cp||'';
     if(d.tipo==='Departamento'){ document.getElementById('tipoDepto').checked=true; toggleDepto(true); $piso.value=d.piso||''; $depto.value=d.depto||''; }
-    $indicaciones.value=d.indicaciones||''; $horario.value=d.horario||''; }catch{}
-  }
+    $indicaciones.value=d.indicaciones||''; $horario.value=d.horario||'';
+  }catch{} }
+
+  // WhatsApp
   function openWhatsAppWith(d){
     const items=[...state.cart.values()].map(i=>`• ${i.nombre} x${i.qty} — ${money(i.precio*i.qty)}`).join('\n');
-    const {subtotal, fee, total}=calcTotals();
-    const zoneName = state.zoneMode==='auto' ? 'Automática' : 'Retiro en local';
-    const pagoLine = d.pay==='efectivo' ? `Efectivo${d.cashChange>0?` (traer cambio de ${money(d.cashChange)})`:''}` : `Transferencia\nAlias: ${CONFIG.PAY.alias}\nCBU: ${CONFIG.PAY.cbu}`;
+    const {subtotal,fee,total}=calcTotals(); const zoneName=state.zoneMode==='auto'?'Automática':'Retiro en local';
+    const pagoLine=d.pay==='efectivo'?`Efectivo${d.cashChange>0?` (traer cambio de ${money(d.cashChange)})`:''}`:`Transferencia\nAlias: ${CONFIG.PAY.alias}\nCBU: ${CONFIG.PAY.cbu}`;
     const esDepto=d.tipo==='Departamento';
-    const datos=[
-      'Datos del cliente:', `Nombre y apellido: ${d.nombre}`, `Localidad: ${d.localidad}`,
-      `Calle y altura: ${d.calle} ${d.altura}`, `Código postal: ${d.cp}`,
-      `Tipo: ${d.tipo}`+(esDepto?`\nPiso: ${d.piso}\nDepto: ${d.depto}`:''),
-      `Pago: ${pagoLine}`, d.indicaciones?`Indicaciones: ${d.indicaciones}`:'', d.horario?`Horario preferido: ${d.horario}`:''
-    ].filter(Boolean).join('\n');
-    const msg=`Hola, quiero hacer este pedido:\n\n${items}\n\nEnvío: ${zoneName} — ${money(fee)}\nSubtotal: ${money(subtotal)}\nTotal: ${money(total)}\n\n${datos}`;
+    const datosCliente=['Datos del cliente:',`Nombre y apellido: ${d.nombre}`,`Localidad: ${d.localidad}`,`Calle y altura: ${d.calle} ${d.altura}`,`Código postal: ${d.cp}`,`Tipo: ${d.tipo}`+(esDepto?`\nPiso: ${d.piso}\nDepto: ${d.depto}`:''),`Pago: ${pagoLine}`, d.indicaciones?`Indicaciones: ${d.indicaciones}`:'', d.horario?`Horario preferido: ${d.horario}`:''].filter(Boolean).join('\n');
+    const msg=`Hola, quiero hacer este pedido:\n\n${items}\n\nEnvío: ${zoneName} — ${money(fee)}\nSubtotal: ${money(subtotal)}\nTotal: ${money(total)}\n\n${datosCliente}`;
     window.open(`https://wa.me/${CONFIG.PHONE}?text=${encodeURIComponent(msg)}`,'_blank');
   }
 
-  // ——— Toast ———
+  // Tilt
+  function enableTilt(tilt){
+    let onMove;
+    tilt.addEventListener('mouseenter',()=>{ tilt._hovering=true; const r=()=>tilt.getBoundingClientRect();
+      onMove=(e)=>{ if(!tilt._hovering) return; const b=r(); const px=(e.clientX-b.left)/b.width; const py=(e.clientY-b.top)/b.height; const rx=(0.5-py)*10; const ry=(px-0.5)*12; tilt.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`; };
+      tilt.addEventListener('mousemove', onMove, {passive:true});
+    });
+    tilt.addEventListener('mouseleave',()=>{ tilt._hovering=false; tilt.style.transform='rotateX(0) rotateY(0)'; if(onMove) tilt.removeEventListener('mousemove', onMove); });
+  }
   let toastTimer; function showToast(text){ $toast.textContent=text||'Listo'; $toast.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ $toast.style.display='none'; },1600); }
+
+  // CSV parser simple (soporta comillas y comillas escapadas)
+  function parseCSV(text){
+    const rows=[]; let cur='', row=[], q=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(c==='"'){
+        if(q && text[i+1]==='"'){ cur+='"'; i++; }
+        else q=!q;
+      }else if(c===',' && !q){ row.push(cur); cur=''; }
+      else if((c==='\n'||c==='\r') && !q){ if(cur||row.length){ row.push(cur); rows.push(row); row=[]; cur=''; } if(c==='\r'&&text[i+1]==='\n') i++; }
+      else cur+=c;
+    }
+    if(cur||row.length){ row.push(cur); rows.push(row); }
+    return rows;
+  }
   </script>
 </body>
 </html>
