@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🧁Q’Bocao</title>
   <meta name="description" content="Postres Q’Bocao: menú dinámico desde Google Sheets, carrito con WhatsApp y envío por zona." />
-  <link rel="preconnect" href="https://script.google.com" crossorigin>
   <style>
-    /* === TEMA: VAINILLA CREMA (claro pastel) === */
     :root{
       --bg:#fffaf3; --bg-2:#fff2e1; --card:#ffffff; --ink:#171717;
       --muted:#6b7280; --accent:#ffd5e2; --accent-2:#ff9fbf; --accent-3:#ff7aa6;
@@ -23,7 +21,6 @@
         radial-gradient(600px 420px at 110% -10%, rgba(255,213,226,.18), transparent 60%),
         linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 60%, #fff 100%);
       min-height:100svh;
-
       /* Anti-titileo */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -39,12 +36,11 @@
       backface-visibility: hidden;
     }
     @media (max-width: 560px){
-      body{ background: var(--bg); } /* gradiente más liviano en móvil */
-      header{ backdrop-filter:none; background:#ffffffd9; } /* blur off */
+      body{ background: var(--bg); }
+      header{ backdrop-filter:none; background:#ffffffd9; }
     }
     .wrap{max-width:1100px; margin:auto; padding:18px}
     .brand{display:flex; align-items:center; gap:12px}
-
     .logo{
       width:40px; height:40px; border-radius:12px; display:grid; place-items:center;
       background:
@@ -58,10 +54,9 @@
     .logo:hover .logo-emoji{ animation-play-state: paused; }
     @media (prefers-reduced-motion: reduce){ .logo-emoji{ animation:none; } }
     @keyframes logo-spin { to{ transform: rotate(360deg); } }
-
     h1{font-size:clamp(20px,3vw,28px); margin:0}
 
-    /* Toolbar simplificada: solo selector de zona */
+    /* Toolbar: solo selector de zona */
     .toolbar{display:grid; grid-template-columns:1fr auto; align-items:center; gap:12px; margin-top:14px}
     .btn,.input,select,textarea{
       border:1px solid var(--chip-bd); background:var(--card); color:var(--ink);
@@ -77,10 +72,7 @@
     .card{
       background:var(--card); border:1px solid rgba(255,159,191,.28); border-radius:16px; overflow:hidden;
       display:flex; flex-direction:column; box-shadow:0 10px 30px rgba(0,0,0,.08); perspective:900px;
-
-      /* 🚀 Fast paint */
-      content-visibility: auto;
-      contain-intrinsic-size: 300px 220px;
+      content-visibility: auto; contain-intrinsic-size: 300px 220px;
     }
     .card .tilt{transform-style:preserve-3d; transition: transform .25s ease; will-change: transform; }
     .card picture{display:block; aspect-ratio:16/11; background:#fafafa; overflow:hidden; border-bottom:1px solid rgba(255,159,191,.28); backface-visibility:hidden}
@@ -119,7 +111,7 @@
     .dialog .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
     .dialog .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
     @media (max-width: 560px){
-      .dialog .grid2, .dialog .grid3{grid-template-columns:1fr;} /* 📱 apila: CP visible */
+      .dialog .grid2, .dialog .grid3{grid-template-columns:1fr;}
     }
     .row{display:grid; gap:6px}
     label{font-size:12px; color:var(--muted)}
@@ -129,20 +121,17 @@
     .paybox{border:1px dashed var(--chip-bd); border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .copy{border:1px solid var(--chip-bd); border-radius:10px; padding:6px 10px; background:transparent; color:var(--ink); cursor:pointer}
 
-    /* Toast */
     .toast{
       position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom, 0px) + 20px);
       transform:translateX(-50%); background:rgba(0,0,0,.8); color:#fff; padding:10px 14px; border-radius:10px; display:none; z-index:9999; pointer-events:none;
     }
 
-    /* Mobile */
     @media (max-width: 960px){
       .toolbar{grid-template-columns:1fr}
       .grid{--min:170px}
       .cart{left:12px; right:12px}
     }
 
-    /* Estado Agotado */
     .card.agotado { opacity:.65; filter:grayscale(.15); }
     .soldout { position:absolute; top:8px; left:8px; }
     .card.agotado .actions .add { opacity:.5; pointer-events:none; }
@@ -160,10 +149,7 @@
       </div>
 
       <div class="toolbar">
-        <!-- Izquierda: (sin filtros) -->
         <div></div>
-
-        <!-- Derecha: zona + badges (solo 2 opciones) -->
         <div class="actions-right" style="display:flex; gap:10px; align-items:center; justify-content:flex-end">
           <select id="zoneSelect" title="Cambiar zona">
             <option value="auto">Zona automática</option>
@@ -197,7 +183,7 @@
     </div>
   </footer>
 
-  <!-- Modal Checkout -->
+  <!-- Modal Checkout (igual que antes) -->
   <div class="modal" id="checkoutModal" aria-hidden="true" role="dialog" aria-labelledby="chkTitle" aria-modal="true">
     <div class="overlay" id="overlay"></div>
     <div class="dialog">
@@ -301,7 +287,7 @@
   <div class="toast" id="toast">Copiado ✅</div>
 
   <script>
-  // Registrar Service Worker (una sola vez)
+  // Service Worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(()=>{});
@@ -314,24 +300,15 @@
     STORE_LNG: -58.5979308,
     PHONE: '5491154815519',
     CURRENCY: 'ARS',
-    ZONES: {
-      retira: {name:'Retiro en local', fee:0},
-      z1: {name:'Automática', fee:1500},
-      z2: {name:'Automática', fee:2500},
-      z3: {name:'Automática', fee:3500}
-    },
+    ZONES: { retira:{name:'Retiro en local', fee:0}, z1:{name:'Automática',fee:1500}, z2:{name:'Automática',fee:2500}, z3:{name:'Automática',fee:3500} },
     PAY: { alias:'roscamacaro.mp', cbu:'0000003100057371117495' }
   };
 
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzEjws1lJHgMw_eBwV8yQKqyHSutaSe8KyJKGd832j-hGeO14Blf_y_VbjndyVx_Dle/exec';
+  // 🟣 CSV publicado (tu link)
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvR8lUTM1DhnVqywz_nmFJ50Qd8FqBCgOqc2sBml5ZHt3h7LYDaC8CArYqldfYcDQp2K_kMJWqIbL4/pub?gid=2121361297&single=true&output=csv";
 
   // ——— Estado ———
-  const state = {
-    cart:new Map(),
-    zone:'retira',
-    zoneMode:'auto',
-    productos:[]
-  };
+  const state = { cart:new Map(), zone:'retira', zoneMode:'auto', productos:[] };
 
   // ——— Elements ———
   const $grid = document.getElementById('grid');
@@ -346,7 +323,6 @@
   const $feeBadge = document.getElementById('feeBadge');
   const $zoneSelect = document.getElementById('zoneSelect');
 
-  // Modal checkout
   const $modal = document.getElementById('checkoutModal');
   const $overlay = document.getElementById('overlay');
   const $closeModal = document.getElementById('closeModal');
@@ -369,28 +345,23 @@
   const $cashRow = document.getElementById('cashRow');
   const $cashChange = document.getElementById('cashChange');
   const $transferRow = document.getElementById('transferRow');
-
   const $toast = document.getElementById('toast');
 
   // ——— Inicio ———
   loadCart();
   loadCheckoutDraft();
   setupModalPayControls();
-  setupTilt();           // tilt optimizado (desktop)
+  setupTilt();
   updateTotals();
 
   // 1) Pintar rápido desde cache si existe
   const cached = loadProductsCache();
-  if (cached && cached.length) {
-    state.productos = cached;
-    render();
-  }
+  if (cached && cached.length) { state.productos = cached; render(); }
 
-  // 2) Cargar desde la API y actualizar
+  // 2) Cargar desde CSV y actualizar
   (async () => {
-    await cargarProductos();
+    await cargarDesdeCSV();
     render();
-    // 3) Geolocalización en idle (no bloquea render)
     (window.requestIdleCallback || setTimeout)(ensureGeoPermissionThenTry, 0);
   })();
 
@@ -400,92 +371,77 @@
     openModal();
   });
   $clearBtn.addEventListener('click', () => {
-    if(confirm('¿Vaciar el carrito?')){
-      state.cart.clear(); persistCart(); updateCartCount(); updateTotals(); render();
-    }
+    if(confirm('¿Vaciar el carrito?')){ state.cart.clear(); persistCart(); updateCartCount(); updateTotals(); render(); }
   });
   $zoneSelect.addEventListener('change', () => {
     const v = $zoneSelect.value;
-    if(v === 'auto'){
-      state.zoneMode = 'auto';
-      ensureGeoPermissionThenTry();
-      $zoneBadge.textContent = `Zona: Automática`;
-    }else{
-      state.zoneMode = 'manual';
-      state.zone = 'retira';
-      updateTotals();
-      $zoneBadge.textContent = `Zona: Retiro en local`;
-    }
+    if(v === 'auto'){ state.zoneMode = 'auto'; ensureGeoPermissionThenTry(); $zoneBadge.textContent = `Zona: Automática`; }
+    else { state.zoneMode = 'manual'; state.zone = 'retira'; updateTotals(); $zoneBadge.textContent = `Zona: Retiro en local`; }
   });
 
-  // —— Copiar alias/CBU
   document.addEventListener('click', async (e)=>{
     const btn = e.target.closest('.copy'); if(!btn) return;
-    const what = btn.dataset.copy;
-    const text = what==='alias' ? CONFIG.PAY.alias : CONFIG.PAY.cbu;
+    const text = btn.dataset.copy==='alias' ? CONFIG.PAY.alias : CONFIG.PAY.cbu;
     try{ await navigator.clipboard.writeText(text); showToast('Copiado ✅'); }catch(e){ showToast('No se pudo copiar'); }
   });
 
-  // —— Modal
-  document.getElementById('tipoCasa').addEventListener('change', ()=> toggleDepto(false));
-  document.getElementById('tipoDepto').addEventListener('change', ()=> toggleDepto(true));
-  $overlay.addEventListener('click', closeModal);
-  $closeModal.addEventListener('click', closeModal);
-  $cancelModal.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && $modal.classList.contains('open')) closeModal(); });
-  $confirmCheckout.addEventListener('click', () => {
-    const data = validateCheckout(); if(!data) return;
-    data.pay = $payTransfer.checked ? 'transferencia' : 'efectivo';
-    data.cashChange = Math.max(0, Number($cashChange.value || 0));
-    persistCheckoutDraft(data);
-    openWhatsAppWith(data);
-    closeModal();
-  });
-
-  // ——— Carga desde Sheets + cache (SWR) ———
-  async function cargarProductos() {
-    try {
+  // ——— CSV → Productos ———
+  async function cargarDesdeCSV(){
+    try{
       $grid.innerHTML = `<div class="empty">Cargando menú...</div>`;
-      const res = await fetch(`${API_URL}?t=${Date.now()}`);
-      const data = await res.json();
-      const arr = (data.productos || []).map(p => {
-        const id = slugify(p.nombre || '') || ('prod-' + Math.random().toString(36).slice(2,8));
-        const img = (p.imagen || '').trim() || 'https://via.placeholder.com/640x440?text=Postre';
-        return {
-          id,
-          nombre:(p.nombre||'').trim(),
-          descripcion:(p.descripcion||'').trim(),
-          precio:Number(p.precio)||0,
-          img,
-          agotado: !!p.agotado
-        };
-      });
+      const res = await fetch(CSV_URL, { cache: 'no-store' });
+      const text = await res.text();
+      const rows = parseCSV(text);
+      if(!rows.length){ throw new Error('CSV vacío'); }
+      const dataRows = rows.slice(1); // quitar encabezados
+      const arr = dataRows
+        .filter(r => r && r.length >= 3 && (r[0]||'').trim()) // al menos nombre
+        .map(([nombre, descripcion, precio, imagen, disponible]) => {
+          const id = slugify(nombre||'') || ('prod-' + Math.random().toString(36).slice(2,8));
+          const img = (imagen||'').trim() || 'https://via.placeholder.com/640x440?text=Postre';
+          const disp = String(disponible||'SI').trim().toLowerCase();
+          const agotado = (disp === 'no' || disp === '0' || disp === 'false');
+          const pnum = Number(String(precio||'0').replace(/[^\d]/g,'')) || 0;
+          return { id, nombre:(nombre||'').trim(), descripcion:(descripcion||'').trim(), precio:pnum, img:img, agotado };
+        });
       state.productos = arr;
       saveProductsCache(arr);
-    } catch (e) {
+    }catch(e){
       console.error(e);
       if(!state.productos.length){
         $grid.innerHTML = `<div class="empty">No pude cargar el menú. Probá recargar.</div>`;
       }
     }
   }
-  function saveProductsCache(arr){
-    try{ localStorage.setItem('qbocao_products_v1', JSON.stringify(arr)); }catch(e){}
-  }
-  function loadProductsCache(){
-    try{ const raw = localStorage.getItem('qbocao_products_v1'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+
+  // CSV parser (soporta comillas)
+  function parseCSV(text){
+    const rows=[]; let row=[], cur='', inQ=false;
+    for(let i=0;i<text.length;i++){
+      const ch=text[i], nx=text[i+1];
+      if(inQ){
+        if(ch==='"' && nx === '"'){ cur+='"'; i++; }
+        else if(ch==='"'){ inQ=false; }
+        else { cur+=ch; }
+      }else{
+        if(ch==='\"'){ inQ=true; }
+        else if(ch===','){ row.push(cur); cur=''; }
+        else if(ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+        else if(ch==='\r'){ /* ignore */ }
+        else { cur+=ch; }
+      }
+    }
+    if(cur.length || row.length){ row.push(cur); rows.push(row); }
+    return rows;
   }
 
   // ——— Render ———
   function render(){
     const list = state.productos;
     $grid.innerHTML = '';
-    if(!list.length){
-      $grid.innerHTML = `<div class="empty">No hay productos disponibles por ahora 🍮</div>`;
-      return;
-    }
+    if(!list.length){ $grid.innerHTML = `<div class="empty">No hay productos disponibles por ahora 🍮</div>`; return; }
     list.forEach(p => $grid.appendChild(card(p)));
-    boostHeroImages(); // prioriza las primeras imágenes (LCP mejor)
+    boostHeroImages();
   }
 
   function card(p){
@@ -493,7 +449,6 @@
     el.className = 'card' + (p.agotado ? ' agotado' : '');
     const badge = p.agotado ? '<span class="badge soldout">Agotado</span>' : '';
     const href = `product.html?id=${encodeURIComponent(p.id)}`;
-
     el.innerHTML = `
       <div class="tilt">
         <a href="${href}" style="display:block; position:relative">
@@ -517,25 +472,17 @@
           <button class="btn remove" data-id="${p.id}">Quitar</button>
         </div>
       </div>`;
-
-    // Tilt 3D optimizado: solo en desktop/hover y por tarjeta
     const hoverCapable = matchMedia('(hover:hover) and (pointer:fine)').matches;
     if (hoverCapable) enableTilt(el.querySelector('.tilt'));
-
-    // agregar / quitar
     el.querySelector('.add').addEventListener('click', () => {
-      addToCart(p.id, +1);
-      el.querySelector('#qty-'+p.id).textContent = getQty(p.id);
+      addToCart(p.id, +1); el.querySelector('#qty-'+p.id).textContent = getQty(p.id);
     });
     el.querySelector('.remove').addEventListener('click', () => {
-      addToCart(p.id, -1);
-      el.querySelector('#qty-'+p.id).textContent = getQty(p.id) || 0;
+      addToCart(p.id, -1); el.querySelector('#qty-'+p.id).textContent = getQty(p.id) || 0;
     });
-
     return el;
   }
 
-  // ——— Boost LCP ———
   function boostHeroImages(){
     const imgs = document.querySelectorAll('#grid img');
     imgs.forEach((img, i) => { if (i < 2) img.setAttribute('fetchpriority', 'high'); });
@@ -660,7 +607,7 @@
   // ——— Tilt 3D optimizado ———
   function setupTilt(){
     const hoverCapable = matchMedia('(hover:hover) and (pointer:fine)').matches;
-    if(!hoverCapable) return; // en móvil no activamos tilt
+    if(!hoverCapable) return;
   }
   function enableTilt(tilt){
     let onMove;
@@ -684,12 +631,9 @@
     });
   }
 
-  // ——— Helpers viewport / toast ———
-  function isInViewport(el){
-    const r = el.getBoundingClientRect();
-    return r.bottom>0 && r.right>0 && r.top < (window.innerHeight||document.documentElement.clientHeight) && r.left < (window.innerWidth||document.documentElement.clientWidth);
-  }
+  // ——— Helpers ———
   let toastTimer; function showToast(text){ $toast.textContent = text || 'Listo'; $toast.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ $toast.style.display='none'; }, 1600); }
+  function isInViewport(el){ const r = el.getBoundingClientRect(); return r.bottom>0 && r.right>0 && r.top < (innerHeight||document.documentElement.clientHeight) && r.left < (innerWidth||document.documentElement.clientWidth); }
   </script>
 </body>
 </html>
