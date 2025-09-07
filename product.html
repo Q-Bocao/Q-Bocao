@@ -67,16 +67,21 @@
     }
   }
 
+  // ✅ AJUSTE: armar ruta de imagen desde el nombre
   function filaAProducto(r){
     const nombre=(r[0]||'').trim();
     const descripcion=(r[1]||'').trim();
     const precio=parsePrecio(r[2]);
-    const img=(r[3]||'').trim() || 'https://via.placeholder.com/800x550?text=Postre';
-    const disp=(r[4]||'').toString().trim().toLowerCase(); // NO = agotado
+
+    const imgName = slugify(nombre) + ".webp";  
+    const img = "img/" + imgName;
+
+    const disp=(r[4]||'').toString().trim().toLowerCase();
     const agotado=(disp==='no'||disp==='0'||disp==='false');
     const id=slugify(nombre);
     return {id,nombre,descripcion,precio,img,agotado};
   }
+
   function parsePrecio(v){ const s=String(v??'').replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',', '.'); const n=parseFloat(s); return isNaN(n)?0:Math.round(n); }
 
   function render(p){
@@ -85,7 +90,7 @@
     document.getElementById('app').innerHTML = `
       <div class="grid">
         <div class="card">
-          <picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='https://via.placeholder.com/800x550?text=Postre'"/></picture>
+          <picture><img alt="${escapeHtml(p.nombre)}" src="${p.img}" onerror="this.src='img/logo-qbocao-128.webp'"/></picture>
         </div>
         <div>
           <h1>${escapeHtml(p.nombre)} ${badge}</h1>
